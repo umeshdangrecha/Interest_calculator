@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Interest Calculator</string>
+    <string name="firstDate">पहली दिनांक</string>
+    <string name="lastDate">आखरी दिनांक</string>
+    <string name="interest_rate">ब्याज दर</string>
+    <string name="initial_amount">मूल रूपए</string>
+    <string name="interest_calculator">Interest Calculator</string>
+    <string name="submit">Submit</string>
+    <string name="cumulative">संचयी ब्याज</string>
 </resources>
