@@ -91,16 +91,16 @@ public class MainActivity extends AppCompatActivity {
         String amountString = amount.getText().toString();
         String rateString = rate.getText().toString();
         int amountValue = 0;
-        int rateValue = 0;
+        double rateValue = 0;
 
         if (!amountString.isEmpty()) {
             amountValue = Integer.parseInt(amountString);
         }
         if (!rateString.isEmpty()) {
-            rateValue = Integer.parseInt(rateString);
+            rateValue = Double.parseDouble(rateString);
         }
 
-        int interestValue = 0;
+        double interestValue = 0;
 
         if (checkBox.isChecked()) {
 
@@ -110,8 +110,8 @@ public class MainActivity extends AppCompatActivity {
                     demoAmount += 12 * (demoAmount * rateValue / 100);
                 }
             }
-            int interestPerMonth = demoAmount * rateValue / 100;
-            int interestPerDay = interestPerMonth / 30;
+            double interestPerMonth = demoAmount * rateValue / 100;
+            double interestPerDay = interestPerMonth / 30;
             interestValue = m * interestPerMonth + d * interestPerDay;
             demoAmount += interestValue;
             interestValue = demoAmount - amountValue;
@@ -124,15 +124,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         } else {
-            int interestPerMonth = amountValue * rateValue / 100;
-            int interestPerDay = interestPerMonth / 30;
+            double interestPerMonth = amountValue * rateValue / 100;
+            double interestPerDay = interestPerMonth / 30;
             interestValue = (y * 12 + m) * interestPerMonth + d * interestPerDay;
 
             date.setText("दिनांक " + d1 + " से " + d2 + " तक");
             days.setText("कुल " + y + " साल " + m + " महीने " + d + " दिन");
             amo.setText("मूल : " + amountValue);
-            interest.setText("कुल ब्याज : " + interestValue);
-            totalAmount.setText("कुल रूपए : " + (amountValue + interestValue));
+            interest.setText("कुल ब्याज : " + String.format("%.02f", interestValue));
+            totalAmount.setText("कुल रूपए : " + String.format("%.02f", (amountValue + interestValue)));
         }
         v1.setBackgroundColor(Color.rgb(237, 0, 0));
         v2.setBackgroundColor(Color.rgb(237, 0, 0));

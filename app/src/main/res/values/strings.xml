@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Interest Calculator</string>
+    <string name="app_name">ब्याज कैलकुलेटर</string>
     <string name="firstDate">पहली दिनांक</string>
     <string name="lastDate">आखरी दिनांक</string>
     <string name="interest_rate">ब्याज दर</string>
