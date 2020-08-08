@@ -1,25 +1,38 @@
 package com.umesh.patidar.interestcalculator;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.time.LocalDate;
-import java.time.Period;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+import com.ycuwq.datepicker.date.DatePicker;
+
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 
 public class MainActivity extends AppCompatActivity {
+    private AdView banner_ad;
+    private InterstitialAd mInterstitialAd;
 
     private EditText amount, rate;
     private TextView date1, date2, date, days, amo, interest, totalAmount;
@@ -27,13 +40,12 @@ public class MainActivity extends AppCompatActivity {
     private CheckBox checkBox;
     private View v1, v2, v3, v4;
 
-
-    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initialize();
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         final int day = Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
         final int month = Calendar.getInstance().get(Calendar.MONTH);
@@ -45,43 +57,43 @@ public class MainActivity extends AppCompatActivity {
         submit.setOnClickListener(v -> submit());
 
 
-        date1.setOnClickListener(new View.OnClickListener() {
+        date1.setOnClickListener(v -> dateAlert(date1));
+        date2.setOnClickListener(v1 -> dateAlert(date2));
+        MobileAds.initialize(this, new OnInitializationCompleteListener() {
             @Override
-            public void onClick(View v) {
-                DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this, AlertDialog.THEME_HOLO_LIGHT, (view, year1, month1, dayOfMonth) -> {
-                    String s1 = String.format("%02d", dayOfMonth) + "/" + String.format("%02d", 1 + month1) + "/" + year1;
-                    date1.setText(s1);
-                }, year, month, day);
-                datePickerDialog.show();
-                datePickerDialog.getDatePicker().setMaxDate(Calendar.getInstance().getTimeInMillis());
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
             }
         });
-        date2.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DatePickerDialog datePickerDialog = new DatePickerDialog(MainActivity.this, AlertDialog.THEME_HOLO_LIGHT, (view, year12, month12, dayOfMonth) -> {
-                    String s12 = String.format("%02d", dayOfMonth) + "/" + String.format("%02d", 1 + month12) + "/" + year12;
-                    date2.setText(s12);
-                }, year, month, day);
-                datePickerDialog.show();
-                datePickerDialog.getDatePicker().setMaxDate(Calendar.getInstance().getTimeInMillis());
-            }
-        });
+        banner_ad = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        banner_ad.loadAd(adRequest);
+
+
+        prepareAd();
+        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutorService.scheduleAtFixedRate(() -> {
+            runOnUiThread(() -> {
+                if (mInterstitialAd.isLoaded()) {
+                    mInterstitialAd.show();
+                }
+            });
+        }, 30, 60, TimeUnit.SECONDS);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void prepareAd() {
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-2388449991477825/5297855378");
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+    }
+
     public void submit() {
         String d1 = date1.getText().toString();
         String d2 = date2.getText().toString();
-        String[] d1string = d1.split("/");
-        String[] d2string = d2.split("/");
-
-        LocalDate dd1 = LocalDate.parse(d1string[2] + '-' + d1string[1] + '-' + d1string[0]);
-        LocalDate dd2 = LocalDate.parse(d2string[2] + '-' + d2string[1] + '-' + d2string[0]);
-        Period period = Period.between(dd1, dd2);
-        int d = period.getDays();
-        int m = period.getMonths();
-        int y = period.getYears();
+        DateDifferenceCustom dateDifferenceCustom = new DateDifferenceCustom(d1, d2);
+        int d = dateDifferenceCustom.getDiffDay();
+        int m = dateDifferenceCustom.getDiffMonth();
+        int y = dateDifferenceCustom.getDiffYear();
+        int z = y;
         if (d < 0)
             d *= -1;
         if (m < 0)
@@ -117,12 +129,10 @@ public class MainActivity extends AppCompatActivity {
             interestValue = demoAmount - amountValue;
 
             date.setText("दिनांक " + d1 + " से " + d2 + " तक");
-            days.setText("कुल " + y + " साल " + m + " महीने " + d + " दिन");
+            days.setText("कुल " + z + " साल " + m + " महीने " + d + " दिन");
             amo.setText("मूल : " + amountValue);
             interest.setText("कुल ब्याज : " + interestValue);
             totalAmount.setText("कुल रूपए : " + (amountValue + interestValue));
-
-
         } else {
             double interestPerMonth = amountValue * rateValue / 100;
             double interestPerDay = interestPerMonth / 30;
@@ -138,8 +148,6 @@ public class MainActivity extends AppCompatActivity {
         v2.setBackgroundColor(Color.rgb(237, 0, 0));
         v3.setBackgroundColor(Color.rgb(237, 0, 0));
         v4.setBackgroundColor(Color.rgb(237, 0, 0));
-
-
     }
 
     private void initialize() {
@@ -167,5 +175,29 @@ public class MainActivity extends AppCompatActivity {
     public void showMyBio(View view) {
         Intent intent = new Intent(this, MyDetail.class);
         startActivity(intent);
+    }
+
+    private void dateAlert(TextView tv) {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        View v = LayoutInflater.from(MainActivity.this).inflate(R.layout.item_cutom_date_picker, null);
+        final DatePicker datePicker = v.findViewById(R.id.datePicker);
+        datePicker.setMaxDate(Calendar.getInstance().getTimeInMillis());
+
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                tv.setText(datePicker.getDate(new SimpleDateFormat("dd/MM/YYYY")));
+
+            }
+        });
+        builder.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+            }
+        });
+        builder.setView(v);
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
     }
 }
